@@ -52,6 +52,7 @@ const run = async () => {
   await consumer.subscribe({ topic: 'patient-created', fromBeginning: true })
   await consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
+      const session = driver.session()
       const msg = JSON.parse(message.value.toString()) 
       if (msg.nationalIDRel){
       await session.run(
@@ -67,6 +68,7 @@ const run = async () => {
           name: msg.nationalID,
           name2: msg.nationalIDRel
         })
+        session.close();
       }
     },
   })
