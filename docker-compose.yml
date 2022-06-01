@@ -1,0 +1,79 @@
+version: '3'
+services:
+  patients:
+    image: moustafaomar/microservices:patients
+    networks:
+      - app
+    depends_on:
+      - zookeeper
+      - kafka
+      - eureka
+      - zuul
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+     - '2181:2181'
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+     - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - app
+  kafka:
+    image: 'bitnami/kafka:latest'
+    ports:
+      - '9092:9092'
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    networks:
+      - app
+    depends_on:
+      - zookeeper
+  eureka:
+    image: moustafaomar/microservices:eureka
+    ports:
+      - "8010:8010"
+    networks:
+      - app
+  zuul:
+    image: moustafaomar/microservices:zuul
+    ports:
+      - "8090:8090"
+    networks:
+      - app
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8010/eureka
+  relations-service:
+    image: moustafaomar/microservices:RelationsService
+    networks:
+      - app
+    depends_on:
+      - zookeeper
+      - kafka
+      - eureka
+      - zuul
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: eureka
+      neoURL: bolt://35.174.3.85:7687
+      neoUser: neo4j
+      neoPw: classroom-holders-cracks
+  labrecord:
+    image: moustafaomar/microservices:LabRecord
+    networks:
+      - app
+    depends_on:
+      - zookeeper
+      - kafka
+      - eureka
+      - zuul
+networks:
+  app:
+    driver: bridge
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
